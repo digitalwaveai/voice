@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d0f0e" />
+    <meta name="description" content="Голосовые комнаты для друзей без регистрации" />
+    <title>VoiceLink</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main id="lobby" class="page lobby-page">
+      <div class="glow glow-one"></div>
+      <div class="glow glow-two"></div>
+
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="VoiceLink — главная">
+          <span class="brand-icon">◉</span>
+          <span>VoiceLink</span>
+        </a>
+        <span class="no-account"><span>✓</span> Без регистрации</span>
+      </header>
+
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="online-label"><span class="live-dot"></span> Связь готова</div>
+          <h1>Просто созвонись<br />со <em>своими.</em></h1>
+          <p>
+            Создай комнату, отправь друзьям короткий ID — и разговаривайте прямо
+            в браузере. Без аккаунтов, установок и лишних действий.
+          </p>
+          <div class="features">
+            <span>◖ Чистый звук</span>
+            <span>◇ P2P-соединение</span>
+            <span>◉ До 8 друзей</span>
+          </div>
+        </div>
+
+        <form id="join-form" class="connect-card">
+          <div class="tabs" role="tablist" aria-label="Способ подключения">
+            <button id="create-tab" class="tab active" type="button">Создать</button>
+            <button id="join-tab" class="tab" type="button">Войти по ID</button>
+          </div>
+
+          <div class="card-heading">
+            <span id="card-icon" class="card-icon">＋</span>
+            <div>
+              <h2 id="card-title">Новая комната</h2>
+              <p id="card-subtitle">Получишь ID сразу после создания</p>
+            </div>
+          </div>
+
+          <label class="field">
+            <span>Твоё имя</span>
+            <input id="name-input" maxlength="24" autocomplete="name" placeholder="Например, Вова" />
+          </label>
+
+          <label id="room-field" class="field hidden">
+            <span>ID комнаты</span>
+            <input id="room-input" class="code-input" maxlength="6" autocomplete="off" placeholder="A7K9Q2" />
+          </label>
+
+          <div id="form-error" class="form-error hidden" role="alert"></div>
+
+          <button id="submit-button" class="primary-button" type="submit">
+            <span id="submit-icon">＋</span>
+            <span id="submit-text">Создать комнату</span>
+          </button>
+          <p class="mic-hint">♩ Браузер попросит доступ только к микрофону</p>
+        </form>
+      </section>
+
+      <footer class="footer">
+        <span>VoiceLink · browser voice rooms</span>
+        <span>Аудио передаётся напрямую и не сохраняется</span>
+      </footer>
+    </main>
+
+    <main id="call" class="page call-page hidden">
+      <div class="glow glow-one"></div>
+      <header class="topbar call-topbar">
+        <button id="logo-exit" class="brand plain-button" type="button">
+          <span class="brand-icon">◉</span>
+          <span>VoiceLink</span>
+        </button>
+        <span id="connection-status" class="connection-status">
+          <span class="live-dot"></span> Защищённая связь
+        </span>
+      </header>
+
+      <section class="room-header">
+        <div>
+          <div class="online-label">◉ Комната друзей</div>
+          <h1>Вы на связи</h1>
+          <p id="room-caption">Ждём остальных — отправь им приглашение</p>
+        </div>
+        <button id="copy-room" class="room-code" type="button">
+          <span>ID комнаты</span>
+          <strong id="room-code">------</strong>
+          <b id="copy-icon">▣</b>
+        </button>
+      </section>
+
+      <section id="participants" class="participants" aria-label="Участники комнаты"></section>
+
+      <div class="controls" aria-label="Управление звонком">
+        <button id="mute-button" class="round-button" type="button" aria-label="Выключить микрофон">♩</button>
+        <div class="control-copy">
+          <strong id="mic-status">Микрофон включён</strong>
+          <span>Звук не записывается</span>
+        </div>
+        <button id="hangup-button" class="round-button hangup" type="button" aria-label="Выйти из комнаты">✕</button>
+      </div>
+
+      <div id="remote-audio" aria-hidden="true"></div>
+    </main>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
