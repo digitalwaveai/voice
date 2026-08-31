@@ -1,6 +1,6 @@
+import os
 import time
 
-import httpx
 from openai import OpenAI
 
 from core.config import AI_MODEL
@@ -44,6 +44,12 @@ VOICE_SYSTEM_PROMPT = """
 """
 
 
+PROXY_ENV_KEYS = (
+    "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY",
+    "http_proxy", "https_proxy", "all_proxy",
+)
+
+
 class OpenAIClient:
 
     def __init__(self, api_key):
@@ -52,26 +58,29 @@ class OpenAIClient:
 
         self.max_chars = 600
         self.retry_count = 2
-        self.http_client = None
 
         if self.available:
+            # Some VPN/proxy programs publish socks4://127.0.0.1:PORT via
+            # environment variables. The OpenAI HTTP stack rejects SOCKS4 at
+            # initialization. Temporarily hide only unsupported SOCKS4 values
+            # while the client is created, then restore the process env.
+            removed = {}
             try:
-                # Some VPN/proxy programs expose a SOCKS4 proxy through
-                # HTTP_PROXY/HTTPS_PROXY/ALL_PROXY. httpx/OpenAI does not
-                # accept the socks4:// scheme and would fail during startup.
-                # Ignore proxy environment variables here; a system-level VPN
-                # still routes this direct connection normally.
-                self.http_client = httpx.Client(
-                    trust_env=False,
-                    timeout=20.0,
-                )
-                self.openai_client = OpenAI(
-                    api_key=api_key,
-                    http_client=self.http_client,
-                )
+                for key in PROXY_ENV_KEYS:
+                    value = os.environ.get(key)
+                    if value and value.lower().startswith("socks4://"):
+                        removed[key] = value
+                        os.environ.pop(key, None)
+
+                self.openai_client = OpenAI(api_key=api_key)
+
             except Exception as e:
                 print("❌ OpenAI init failed:", e)
                 self.available = False
+
+            finally:
+                for key, value in removed.items():
+                    os.environ[key] = value
 
     def ask(self, prompt):
         if not self.available:
