@@ -38,6 +38,7 @@ datas += [
     (os.path.join(project_dir, "models"), "models"),
     (os.path.join(project_dir, "core"), "core"),
     (os.path.join(project_dir, "config.yaml"), "."),
+    (os.path.join(project_dir, "commands.yaml"), "."),
 ]
 
 
