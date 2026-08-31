@@ -104,8 +104,6 @@ PORCUPINE_ACCESS_KEY = os.getenv("PORCUPINE_ACCESS_KEY") or CONFIG["porcupine"].
 
 # AI (ENV priority)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or CONFIG["ai"].get("api_key", "")
-# Compatibility alias: original assistant.py remains byte-for-byte unchanged.
-GEMINI_API_KEY = OPENAI_API_KEY
 AI_ENABLED = bool(CONFIG["ai"].get("enabled", True))
 AI_MODEL = CONFIG["ai"].get("model", "gpt-5.6-luna")
 
