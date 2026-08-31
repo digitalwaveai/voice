@@ -23,7 +23,10 @@ DEFAULT_CONFIG = {
         "microphone_sensitivity": 2.5,
         "silence_timeout": 1.2,
     },
-    "porcupine": {"access_key": ""},
+    "openwakeword": {
+        "model": "hey_jarvis",
+        "threshold": 0.40,
+    },
     "ai": {
         "enabled": True,
         "provider": "openai",
@@ -97,10 +100,9 @@ MICROPHONE_INDEX = CONFIG["audio"].get("microphone_index")
 MICROPHONE_SENS = float(CONFIG["audio"].get("microphone_sensitivity", 2.5))
 SILENCE_TIMEOUT = float(CONFIG["audio"].get("silence_timeout", 1.2))
 
-# Porcupine (ENV priority)
-PORCUPINE_ACCESS_KEY = os.getenv("PORCUPINE_ACCESS_KEY") or CONFIG["porcupine"].get(
-    "access_key", ""
-)
+# openWakeWord
+OPENWAKEWORD_MODEL = str(CONFIG.get("openwakeword", {}).get("model", "hey_jarvis"))
+OPENWAKEWORD_THRESHOLD = float(CONFIG.get("openwakeword", {}).get("threshold", 0.40))
 
 # AI (ENV priority)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or CONFIG["ai"].get("api_key", "")
