@@ -26,13 +26,15 @@ jobs:
           git clone https://github.com/RustamovAkrom/JARVIS.git jarvis
           git -C jarvis checkout a33d1e8483915d6d5b23f42e9014910ea1ca9e4a
 
-      - name: Apply ONLY Gemini to OpenAI changes
+      - name: Apply OpenAI and openWakeWord replacement
         shell: pwsh
         run: |
           Copy-Item "jarvis-openai-patch\core\assistant.py" "jarvis\core\assistant.py" -Force
+          Copy-Item "jarvis-openai-patch\core\stt.py" "jarvis\core\stt.py" -Force
           Copy-Item "jarvis-openai-patch\core\config.py" "jarvis\core\config.py" -Force
           Copy-Item "jarvis-openai-patch\core\ai\openai_client.py" "jarvis\core\ai\openai_client.py" -Force
           Copy-Item "jarvis-openai-patch\pyproject.toml" "jarvis\pyproject.toml" -Force
+          Copy-Item "jarvis-openai-patch\main.spec" "jarvis\main.spec" -Force
           Copy-Item "jarvis-openai-patch\.env-example" "jarvis\.env-example" -Force
           Copy-Item "jarvis-openai-patch\config.yaml" "jarvis\config.yaml" -Force
           if (Test-Path "jarvis\core\ai\gemini.py") {
@@ -58,7 +60,7 @@ jobs:
           cache: pip
           cache-dependency-path: jarvis/pyproject.toml
 
-      - name: Install original project dependencies
+      - name: Install project dependencies
         shell: pwsh
         working-directory: jarvis
         run: |
@@ -67,8 +69,8 @@ jobs:
             "comtypes>=1.4.15" `
             "openai>=1.0.0" `
             "numpy>=2.4.1" `
+            "openwakeword>=0.6.0" `
             "pillow>=12.1.0" `
-            "pvporcupine>=4.0.1" `
             "pyaudio>=0.2.14" `
             "pycaw>=20251023" `
             "pyinstaller>=6.18.0" `
@@ -83,16 +85,22 @@ jobs:
             "vosk>=0.3.45" `
             "websockets>=15.0.1"
 
-      - name: Verify OpenAI replacement
+      - name: Download official openWakeWord Jarvis model
         shell: pwsh
         working-directory: jarvis
         run: |
-          python -c "from core.ai.openai_client import OpenAIClient; from core import config; assert config.CONFIG['ai']['provider'] == 'openai'; assert config.AI_MODEL == 'gpt-5.6-luna'; print('OpenAI replacement OK')"
-          if (Select-String -Path "core\assistant.py","core\config.py","pyproject.toml","config.yaml" -Pattern "google-genai|from google import genai|GEMINI_API_KEY" -Quiet) {
-            throw "Gemini runtime reference still present"
+          python -c "from openwakeword.utils import download_models; download_models(['hey_jarvis']); print('openWakeWord hey_jarvis models downloaded')"
+
+      - name: Verify replacements
+        shell: pwsh
+        working-directory: jarvis
+        run: |
+          python -c "from core.ai.openai_client import OpenAIClient; from core import config; assert config.CONFIG['ai']['provider'] == 'openai'; assert config.AI_MODEL == 'gpt-5.6-luna'; assert config.OPENWAKEWORD_MODEL == 'hey_jarvis'; print('OpenAI + openWakeWord replacement OK')"
+          if (Select-String -Path "core\assistant.py","core\stt.py","core\config.py","pyproject.toml","main.spec","config.yaml" -Pattern "pvporcupine|PORCUPINE_ACCESS_KEY|google-genai|from google import genai|GEMINI_API_KEY" -Quiet) {
+            throw "Old Gemini or Porcupine runtime reference still present"
           }
 
-      - name: Build Jarvis exactly with original PyInstaller spec
+      - name: Build Jarvis with original PyInstaller flow
         shell: pwsh
         working-directory: jarvis
         run: |
@@ -123,7 +131,7 @@ jobs:
       - name: Upload JarvisInstaller.exe
         uses: actions/upload-artifact@v4
         with:
-          name: JarvisInstaller-OpenAI
+          name: JarvisInstaller-OpenAI-openWakeWord
           path: jarvis/installer/output/JarvisInstaller.exe
           if-no-files-found: error
           retention-days: 30
