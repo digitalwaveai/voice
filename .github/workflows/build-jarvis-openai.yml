@@ -39,6 +39,18 @@ jobs:
             Remove-Item "jarvis\core\ai\gemini.py" -Force
           }
 
+      - name: Always show install location page
+        shell: pwsh
+        run: |
+          $path = "jarvis\installer\inno.iss"
+          $text = [System.IO.File]::ReadAllText($path)
+          if ($text -match '(?m)^DisableDirPage=') {
+            $text = [regex]::Replace($text, '(?m)^DisableDirPage=.*$', 'DisableDirPage=no')
+          } else {
+            $text = $text -replace 'DisableProgramGroupPage=no', "DisableProgramGroupPage=no`r`nDisableDirPage=no"
+          }
+          [System.IO.File]::WriteAllText($path, $text, [System.Text.UTF8Encoding]::new($false))
+
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
         with:
