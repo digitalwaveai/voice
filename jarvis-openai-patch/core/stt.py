@@ -9,13 +9,15 @@ import numpy as np
 from vosk import Model, KaldiRecognizer
 
 try:
+    import openwakeword
     from openwakeword.model import Model as OpenWakeWordModel
 except Exception:
+    openwakeword = None
     OpenWakeWordModel = None
 
 
 # AUDIO QUEUE
-q = queue.Queue(maxsize=30)
+q = queue.Queue(maxsize=120)
 
 
 # GLOBAL MIC STATS
@@ -58,16 +60,23 @@ class SpeachToText:
         self.active = False
 
         # openWakeWord replaces Picovoice Porcupine.
-        # The official model is trained for "hey jarvis" and also often
-        # recognizes the shorter "jarvis" phrase.
+        # Load the exact bundled ONNX path. This makes it possible to replace
+        # only hey_jarvis_v0.1.onnx with a custom compatible Jarvis model.
         self.wakeword_model = None
-        if OpenWakeWordModel is not None:
+        self.wakeword_model_path = None
+        if OpenWakeWordModel is not None and openwakeword is not None:
             try:
+                bundled = openwakeword.MODELS["hey_jarvis"]["model_path"]
+                model_file = bundled.replace(".tflite", ".onnx")
+                self.wakeword_model_path = model_file
+
                 self.wakeword_model = OpenWakeWordModel(
-                    wakeword_models=["hey_jarvis"],
+                    wakeword_models=[model_file],
                     inference_framework="onnx",
                 )
-                print("openWakeWord: hey_jarvis model loaded")
+
+                size = os.path.getsize(model_file) if os.path.exists(model_file) else -1
+                print(f"openWakeWord model loaded: {model_file} ({size} bytes)")
             except Exception as e:
                 print("openWakeWord init error:", e)
 
@@ -81,9 +90,12 @@ class SpeachToText:
         if self.active:
             return
 
+        # openWakeWord is designed around 80 ms / 1280 sample frames at 16 kHz.
+        # Vosk also accepts these smaller PCM chunks, so one stream can safely
+        # feed both wake-word detection and command recognition.
         self.stream = sd.RawInputStream(
             samplerate=16000,
-            blocksize=8000,
+            blocksize=1280,
             dtype="int16",
             channels=1,
             callback=callback,
@@ -134,7 +146,7 @@ class SpeachToText:
                     print("openWakeWord prediction error:", e)
                     return False
 
-            time.sleep(0.01)
+            time.sleep(0.005)
 
     # SMART LISTEN (ADAPTIVE)
     def listen(self, timeout=10, silence_timeout=1.2):
