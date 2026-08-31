@@ -29,7 +29,7 @@ class Assistant:
         self.session_timeout = 15
         self.last_activity = time.time()
 
-        # WAKEWORD FROM CONFIG
+        # Vosk fallback only if openWakeWord cannot initialize
         self.wakewords = ["джарвис", "jarvis", "чарльз", "джервис"]
 
         # FAIL SYSTEM
@@ -86,7 +86,7 @@ class Assistant:
             self.speak("Возвращаюсь в режим ожидания")
             self.reset_session()
     
-    # WAKEWORD CHECK
+    # VOSK WAKEWORD FALLBACK
     def wakeword_detect(self, text: str) -> str:
         words = text.split()
         return any(w in words for w in self.wakewords)
@@ -135,7 +135,19 @@ class Assistant:
                         print("⏱ Session timeout → standby")
                         self.reset_session()
 
-                # LISTEN
+                # PRIMARY WAKE WORD DETECTION: openWakeWord
+                if not self.session_active and self.stt.wakeword_available:
+                    if self.stt.wait_for_wakeword(
+                        timeout=2,
+                        threshold=config.OPENWAKEWORD_THRESHOLD,
+                    ):
+                        self.session_active = True
+                        self.last_activity = time.time()
+                        self.fail_count = 0
+                        self.speak("Слушаю")
+                    continue
+
+                # LISTEN: Vosk command recognition, or fallback wakeword detection
                 user_text = self.stt.listen(
                     timeout=2,
                     silence_timeout=config.SILENCE_TIMEOUT
@@ -147,7 +159,7 @@ class Assistant:
                 print("🗣️ User said:", user_text)
                 normalized = self.router.normalize(user_text)
                 
-                # NOT ACTIVE -> WAIT WAKEWORD
+                # FALLBACK ONLY: if openWakeWord failed to initialize
                 if not self.session_active:
                     if not self.wakeword_detect(normalized):
                         continue
