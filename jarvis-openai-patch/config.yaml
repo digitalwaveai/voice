@@ -8,8 +8,9 @@ audio:
   microphone_sensitivity: 2.5
   silence_timeout: 1.2
 
-porcupine:
-  access_key: ""
+openwakeword:
+  model: "hey_jarvis"
+  threshold: 0.40
 
 ai:
   enabled: true
