@@ -1,5 +1,6 @@
 import time
 
+import httpx
 from openai import OpenAI
 
 from core.config import AI_MODEL
@@ -51,10 +52,23 @@ class OpenAIClient:
 
         self.max_chars = 600
         self.retry_count = 2
+        self.http_client = None
 
         if self.available:
             try:
-                self.openai_client = OpenAI(api_key=api_key)
+                # Some VPN/proxy programs expose a SOCKS4 proxy through
+                # HTTP_PROXY/HTTPS_PROXY/ALL_PROXY. httpx/OpenAI does not
+                # accept the socks4:// scheme and would fail during startup.
+                # Ignore proxy environment variables here; a system-level VPN
+                # still routes this direct connection normally.
+                self.http_client = httpx.Client(
+                    trust_env=False,
+                    timeout=20.0,
+                )
+                self.openai_client = OpenAI(
+                    api_key=api_key,
+                    http_client=self.http_client,
+                )
             except Exception as e:
                 print("❌ OpenAI init failed:", e)
                 self.available = False
